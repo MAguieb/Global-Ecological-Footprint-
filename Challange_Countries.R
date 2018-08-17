@@ -1,15 +1,6 @@
-
-
-
-# =========================================================================================================
-# MASTER 2 TIDE - PROJET ETUDE_Countries 2017-2018
-# Thi My Linh TRAN & Mereim AGUIEB
-# =========================================================================================================
-# 
+ rm(list=ls(all=TRUE)) 
 
 ## download packages and library
-
- rm(list=ls(all=TRUE)) 
 # install.packages("lubridate")
 # install.packages('tidyverse') 
 # install.packages("leaflet", dependencies = TRUE)
@@ -68,8 +59,6 @@ library(gridExtra)
 
 
 # _____________Importation des Data _____________________________________________#
-
-setwd("C:/Users/Admin/Desktop/Projet Dany")
 countries <- fread("./countries.csv")
 Coun <-fread("./Country.csv")
 
@@ -109,7 +98,7 @@ nrow(countries[rowSums(is.na(countries)) > 0,])
 
 colnames(countries)[colSums(is.na(countries)) > 0]
 
-# Visualisation des valeurs abérantes pour les quatres variables 
+# Visualisation des valeurs abÃ©rantes pour les quatres variables 
 # la Variable GPD :
 hcboxplot(x = countries$GDP_per_Capita) %>% 
   hc_chart(type = "column") %>% 
@@ -119,7 +108,7 @@ hcboxplot(x = countries$GDP_per_Capita) %>%
                 href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
                 style = list(fontSize = "12px"))
 
-# par région:
+# par rÃ©gion:
 
 hcboxplot(x = countries$GDP_per_Capita, var= countries$Region) %>% 
   hc_chart(type = "column") %>% 
@@ -139,7 +128,7 @@ hcboxplot(x = countries$Biocapacity_Deficit_or_Reserve) %>%
              href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
              style = list(fontSize = "12px"))
 
-# par région:
+# par rÃ©gion:
 hcboxplot(x = countries$Biocapacity_Deficit_or_Reserve, var= countries$Region) %>% 
   hc_chart(type = "column") %>% 
   hc_title(text = "Biocapacity Deficit or Reserve per Region") %>%
@@ -178,7 +167,7 @@ hcboxplot(x = countries$Population) %>%
              href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
              style = list(fontSize = "12px"))
 
-#  par région :
+#  par rÃ©gion :
 hcboxplot(x = countries$Population, var= countries$Region) %>% 
   hc_chart(type = "column") %>% 
   hc_title(text = "Population per Region") %>%
@@ -239,7 +228,7 @@ hchart.cor <- function(object, ...) {
     hc_colorAxis(  stops= cor_colr,min=-1,max=1)
   }
 
-# sélection des valeurs numérique & calcule de la matrice de correlation 
+# sÃ©lection des valeurs numÃ©rique & calcule de la matrice de correlation 
 
 countries_num<- countries %>% select_if(is.numeric) %>% na.omit()
 
@@ -343,7 +332,7 @@ hchart(by_countries1, type="bar", hcaes(x = Country, y = Biocapacity_Deficit_or_
              href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
              style = list(fontSize = "12px"))
  
-# Moyenne Bio_Deficit_Reserve par Région 
+# Moyenne Bio_Deficit_Reserve par RÃ©gion 
 
 by_Region <- countries %>% group_by(Region)%>%summarise_at(vars(Biocapacity_Deficit_or_Reserve),mean)
 
@@ -422,7 +411,7 @@ highchart() %>%
                style = list(fontSize = "12px"))
   
  
-  # on filtre sur les valeurs abérantes et revoit la distribution :
+  # on filtre sur les valeurs abÃ©rantes et revoit la distribution :
   
   hchart(filter(countries,Biocapacity_Deficit_or_Reserve< 20,Population< 500), type = 'scatter',
          hcaes(x = Biocapacity_Deficit_or_Reserve, y = Population, 
@@ -442,7 +431,7 @@ highchart() %>%
   
   By_Region_Hdi <-countries %>% group_by(Region) %>% na.omit() %>% summarise_at(vars(HDI),mean)
   
-  # graphe par Pays et région :
+  # graphe par Pays et rÃ©gion :
 
     highchart() %>% 
     hc_title(text = "HDI per Country & Region 2016 ") %>%
@@ -478,10 +467,10 @@ highchart() %>%
                style = list(fontSize = "12px"))
   
   
- ##############________________Analyse de la variable Biocapacity par Ctégorie_____________#################
+ ##############________________Analyse de la variable Biocapacity par CtÃ©gorie_____________#################
   
 
- #  création de nouvelles variables qui caractérisent la variable biocapacity :
+ #  crÃ©ation de nouvelles variables qui caractÃ©risent la variable biocapacity :
  
   Cat_biocap <- countries %>% dplyr::select( Country,Region,Population, HDI, GDP_per_Capita,Cropland_Footprint, Grazing_Footprint,Forest_Footprint,Fish_Footprint, Cropland, Grazing_Land, Forest_Land,Fishing_Water,Total_Biocapacity,Total_Ecological_Footprint,Biocapacity_Deficit_or_Reserve) %>% na.omit() %>% 
     mutate( Biocapacity_gropLand = Cropland - Cropland_Footprint,  Biocapacity_grazing = Grazing_Land - Grazing_Footprint,
@@ -700,7 +689,7 @@ highchart() %>%
                style = list(fontSize = "12px"))
   
   
-# ____________________________Analyse plus Profonde ________________________________
+# ____________________________Analyse plus Profonde ________________________________#
   
   # Visualisation de la variable Total Ecological Foorprint  :
 
@@ -761,9 +750,7 @@ highchart() %>%
     hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
                href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
                style = list(fontSize = "12px"))
-  
-# # # # # # # # # # # #  a changer le nom stp 
-  
+
   # Correlation avec la variable GDP_per_Capita
   
   t9<-tooltip_table(c("Region :","Country :", "HDI:","GDP:","Total Ecological Footprint :","Biocapacity(Reserve/Deficit):"), 
@@ -828,7 +815,6 @@ highchart() %>%
                  href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
                  style = list(fontSize = "12px")) %>% 
       hc_legend(enabled = TRUE)
-    
     
     # Distribution Categories of Total Biocapacity per region :
     
