@@ -1,0 +1,1123 @@
+---
+title: "<center>**Global Ecological Footprint Project**</center>"
+author: "<center>By Thi My Linh TRAN & Mereim AGUIEB</center>"
+date: "<center>Paris, 15 Avril 2018</center>"
+output:
+  pdf_document:
+    fig_caption: yes
+    fig_height: 4
+    number_sections: yes
+  html_document:
+    fig_caption: yes
+    fig_width: 10
+    fig_height: 7
+    number_sections : yes
+    code_folding: show
+    toc: yes
+  word_document: default
+---
+\centering
+\raggedright
+    
+\begin{center}
+MASTER 2 TECHNIQUES D'INFORMATION ET DE DECISION DANS L'ENTREPRISE
+\end{center}
+    
+
+\newpage
+\tableofcontents
+
+<style type="text/css">
+
+
+<style type="text/css">
+
+body{ font-family: "Calibri"
+      font-size: 11px;
+  }
+td {  /* Table  */
+  font-size: 8px;
+}
+h1.title {
+  font-size: 28px;
+  color: DarkRed;
+}
+h1 { /* Header 1 */
+  font-size: 28px;
+  color: DarkBlue;
+}
+h2 { /* Header 2 */
+    font-size: 22px;
+  color: DarkBlue;
+}
+h3 { /* Header 3 */
+  font-size: 18px;
+  font-family: "Calibri", Times, serif;
+  color: DarkBlue;
+}
+code.r{ /* Code block */
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 11px;
+}
+
+
+</style>
+
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="justify")
+```
+
+\newpage
+
+# Introduction
+
+## Probl?matique & D?finitions
+
+L'empreinte ?cologique recueille des donn?es sur les atouts ?cologiques dont une population a besoin pour produire les ressources naturelles qu'elle consomme, notre jeux de donn?es pr?sentent l'empreinte ?cologique par pays, ceci est une analyse de donn?es exploratoire sur l'ensemble de nos variables. 
+
+D'une part l'empreinte ?cologique qui repr?sente l'?carte entre la consommation des ressources naturelles et la capacit? d'absorber les d?chets produits d'une population donn?e. 
+
+Il est d?fini par :
+
+Total Ecological Foorprint = Cropland Footprint + Grazing Footprint + Forest Footprint + Carbon Footprint + Fish Footprint + Built-up Footprint
+
+D'autre part cette variable est compar? au Total Biocapacity de la r?gion, qui est d?fini par:
+Total Biocapacit? = Cropland + Grazing Land + Forest Land + Fishing Water + Urban Land
+
+On aussi la variable Biocapacity (Reserve or Deficit) qui d?finit par: 
+
+BioCapacity = Total Biocapacity - Total Ecological Foorprint
+
+ Si BioCapacity > 0, la r?gion est appel?e une r?serve.
+   
+ Si BioCapacity < 0, la r?gion est appel?e D?ficit, ce qui signifie qu'elle doit importer des actifs pour soutenir sa population.
+
+N.B: Notre jeux de donn?es ne contient pas la variable Built-up Footprint, mais nous pouvons l'inf?rer en soustrayant le Total Ecological Foorprint des autres caract?ristiques (Cropland Footprint, Grazing Footprint, Forest Footprint, Carbon Footprint, Fish Footprint)
+
+Quelques R?flexions:
+ 
+ Quels pays ont les plus grands d?ficits ou r?serves ?cologiques?
+ 
+ Existe-t-il une relation entre le statut d'un pays (R?serve, D?ficit) et sa Population, GPD, HDI (Indice de 
+ D?veloppement Humain)?
+   
+# Dataset Overview{.tabset .tabset-fade .tabset-pills} 
+
+Tout d'abord, regardons les variables que nous avons dans notre jeux de donn?es: 
+
+```{r Airbnb, fig.align="center", echo=FALSE, message=FALSE, warning=FALSE}
+library(leaflet)
+library(ggplot2)
+library (dplyr)
+library(tidyr)
+library(data.table)
+library(lubridate)
+library(magrittr)
+library(tidyverse)
+library(manhattanly)
+library(randomForest)
+library(missForest)
+library(mice)
+library(VIM)
+library(margins)
+library(sunburstR)
+library(ggcorrplot)
+library(rpart)
+library(forcats)
+library(qqman)
+library(MASS)  
+library(glmnet)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+library(caret)
+library(foreach)
+library(purrr)
+library(zoo)
+library (doParallel)
+library(highcharter)
+library(DT)
+library(viridisLite)
+library(countrycode)
+library(xts)
+library(maps)
+library(maptools)
+library(treemap)
+library(igraph)
+library(Amelia)
+library(gridExtra)
+# install.packages("yaml")
+library(yaml)
+setwd("C:/Users/Admin/Desktop/Projet Dany")
+countries <- fread("./countries.csv")
+Coun <-fread("./Country.csv")
+glimpse (countries)
+```
+
+<center>Table 1 : Visualisation des Donn?es</center>
+  
+Notre ensemble de donn?es contient 22 variables et 188 observations. Chaque ligne correspond aux diif?rents informations qui   caract?rise un pays donn?e telles que: GDP_per_Capita, HDI, Population, etc., y compris son statut en Biocapacity (Reserve or Deficit). En observant rapidement, nous pouvons voir qu'il y a des variables qui contiennent des valeurs manquantes. De plus, il y a des variables que nous n'aurons pas besoin d'utiliser. En effet, Data_Quality ne sera pas utilser dans notre ?tude.
+
+
+# Traitement & Codage des Donn?es
+
+## Data Selection
+  
+Afin d'analyser efficacement notre jeux de donn?es, on a fait un r?sum? sur l'ensemble de donn?es pour voir s'il y a des valeurs aberrantes ou des valeurs manquantes dans les donn?es et on a aussi fait quelques traitement de variables et recodage afin d'adapter notre jeux de donn?es ? notre ?tude. 
+
+```{r summary, fig.height=4.5, fig.width=6, message=FALSE, warning=FALSE, include=FALSE}
+gsub(" ","_",colnames(countries))
+names(countries)<-gsub(" ","_",colnames(countries))
+names(countries)[3]<-"Population"
+str(countries)    
+
+countries$GDP_per_Capita <- chartr(countries$GDP_per_Capita, old = "$", new = " ")
+countries$GDP_per_Capita = gsub(",","",as.character(countries$GDP_per_Capita))
+countries$GDP_per_Capita = gsub(" ","",as.character(countries$GDP_per_Capita))
+
+countries <- countries %>% mutate(GDP_per_Capita=as.double(as.character(GDP_per_Capita)))
+
+```
+
+##Traitement des Valeurs Manquantes
+
+Le r?sultat montre qu'il y a effectivement 46 lignes avec des valeurs manquantes dans les variables sont les suivantes : ("HDI","GDP_per_Capita","Cropland_Footprint","Grazing_Footprint","Forest_Footprint","Carbon_Footprint",
+"Fish_Footprint","Cropland","Grazing_Land","Forest_Land","Fishing_Water","Urban_Land"). 
+les valeurs manquantes ne concernent que les cat?gories de Total Ecological Foorprint et Total BioCapacity, et non pas dans les variables qui repr?sentent leurs totaux, donc nous pouvons toujours utiliser ces valeurs.
+
+```{r, include=FALSE}
+
+anyNA(countries)
+
+nrow(countries[rowSums(is.na(countries)) > 0,])
+
+colnames(countries)[colSums(is.na(countries)) > 0]
+
+```
+
+  
+## Etude des Valeurs Ab?rrantes{.tabset .tabset-fade .tabset-pills}  
+
+Gr?ce ? ces bo?tes ? moustaches, nous pouvons clairement voir les valeurs extr?mes soit par pays ou bien par r?gion. Dans le boxplot du Population par exemple soit par pays ou bien par region, les valeurs maximales ?taient dans les r?gions Asiatiques, dans l'Afrique et l'Amerique Latine. 
+on adaptant la meme logique  pour les autres variables analys?es, il est possible de choisir d'exclure ces variables pour serner les enjeux de l'?tudes, mais vu que c'est informations sont des caract?ristiques qui diff?renciers chaque pays, on a pr?fer? les garder et de faire des filtres au fur et au musure de notre ?tude si cela s'av?re n?cessaire.
+
+
+### Analyser GDP per Capita 
+
+```{r, echo=FALSE, fig.height=3, fig.width=3, message=FALSE, warning=FALSE, fig.show = 'hold'}
+
+hcboxplot(x = countries$GDP_per_Capita) %>% 
+  hc_chart(type = "column") %>% 
+  hc_title(text = "GDP per Capita") %>%
+  hc_subtitle(text = "visualization of The Outliers") %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+                href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+                style = list(fontSize = "12px"))
+
+hcboxplot(x = countries$GDP_per_Capita, var= countries$Region) %>% 
+  hc_chart(type = "column") %>% 
+  hc_title(text = "GDP per Capita per Region") %>%
+  hc_subtitle(text = "visualization of The Outliers") %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+
+```
+
+
+### Analyser HDI 
+
+```{r, echo=FALSE, fig.height=3, fig.width=3, message=FALSE, warning=FALSE, fig.show = 'hold'}
+
+hcboxplot(x = countries$HDI) %>% 
+  hc_chart(type = "column") %>% 
+  hc_title(text = "HDI") %>%
+  hc_subtitle(text = "visualization of The Outliers") %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+hcboxplot(x = countries$HDI, var= countries$Region) %>% 
+  hc_chart(type = "column") %>% 
+  hc_title(text = "HDI per Region") %>%
+  hc_subtitle(text = "visualization of The Outliers") %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+```
+
+
+### Analyser Population 
+
+```{r, echo=FALSE, fig.height=3, fig.width=3, message=FALSE, warning=FALSE, fig.show = 'hold'}
+
+hcboxplot(x = countries$Population) %>% 
+  hc_chart(type = "column") %>% 
+  hc_title(text = "Population") %>%
+  hc_subtitle(text = "visualization of The Outliers") %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+
+hcboxplot(x = countries$Population, var= countries$Region) %>% 
+  hc_chart(type = "column") %>% 
+  hc_title(text = "Population per Region") %>%
+  hc_subtitle(text = "visualization of The Outliers") %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+```
+
+
+### Analyser Biocapacity Deficit or Reserve 
+
+```{r, echo=FALSE, fig.height=3, fig.width=3, message=FALSE, warning=FALSE, fig.show = 'hold'}
+
+hcboxplot(x = countries$Biocapacity_Deficit_or_Reserve) %>% 
+  hc_chart(type = "column")    %>% #to put box vertical
+  hc_title(text = "Biocapacity Deficit or Reserve ") %>%
+  hc_subtitle(text = "visualization of The Outliers") %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+
+hcboxplot(x = countries$Biocapacity_Deficit_or_Reserve, var= countries$Region) %>% 
+  hc_chart(type = "column") %>% 
+  hc_title(text = "Biocapacity Deficit or Reserve per Region") %>%
+  hc_subtitle(text = "visualization of The Outliers") %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+```
+
+
+## Analyse des Corr?lations
+
+La figure ci-dessus repr?sente la matrice de corr?lation des variables num?riques de l'ensemble de donn?es. Nous avons exclu les variables non num?riques.
+
+Gr?ce ? cette matrice de corr?lation, nous avons trouv? que la variable Total Ecological Footprint est  corr?l?e avec la variable HDI(0.73),avec la variable GPD_per_Capita(0.83), et avec la variable Earths Required(1) est se sont des corr?lations tr?s fortes.
+
+```{r Correlation, echo=FALSE,fig.height=6, fig.width=6, message=FALSE, warning=FALSE}
+hchart.cor <- function(object, ...) {
+  
+  df <- as.data.frame(object)
+  is.num <- sapply(df, is.numeric)
+  df[is.num] <- lapply(df[is.num], round, 2)
+  dist <- NULL
+  
+  x <- y <- names(df)
+  
+  df <- tbl_df(cbind(x = y, df)) %>% 
+    gather(y, dist, -x) %>% 
+    mutate(x = as.character(x),
+           y = as.character(y)) %>% 
+    left_join(data_frame(x = y,
+                         xid = seq(length(y)) - 1), by = "x") %>% 
+    left_join(data_frame(y = y,
+                         yid = seq(length(y)) - 1), by = "y")
+  
+  ds <- df %>% 
+    select_("xid", "yid", "dist") %>% 
+    list.parse2()
+  
+  fntltp <- JS("function(){
+               return this.series.xAxis.categories[this.point.x] + ' ~ ' +
+               this.series.yAxis.categories[this.point.y] + ': <b>' +
+               Highcharts.numberFormat(this.point.value, 2)+'</b>';
+               ; }")
+  cor_colr <- list( list(0, '#FF5733'),
+                    list(0.5, '#F8F5F5'),
+                    list(1, '#2E86C1')
+  )
+  highchart() %>% 
+    hc_chart(type = "heatmap") %>% 
+    hc_xAxis(categories = y, title = NULL) %>% 
+    hc_yAxis(categories = y, title = NULL) %>% 
+    hc_add_series(data = ds) %>% 
+    hc_plotOptions(
+      series = list(
+        boderWidth = 0,
+        dataLabels = list(enabled = TRUE)
+      )) %>% 
+    hc_tooltip(formatter = fntltp) %>% 
+    hc_legend(align = "right", layout = "vertical",
+              margin = 0, verticalAlign = "top",
+              y = 25, symbolHeight = 280) %>% 
+    hc_colorAxis(  stops= cor_colr,min=-1,max=1)
+}
+
+countries_num<- countries %>% select_if(is.numeric) %>% na.omit()
+
+x <-  countries_num  %>% cor()
+
+hchart.cor(x) %>% 
+  hc_title(text = "Matrix of Correlation") %>%
+  hc_subtitle(text = "visualization of The Values") %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+```
+
+
+# Analyse des Donn?es
+
+##Analyse de la Distribution de la Variable Biocapacity Deficit or Reserve
+
+### Biocapacity Deficit or Reserve par Pays{.tabset .tabset-fade .tabset-pills}
+
+Puisque nous allons concentrer notre projet sur la variable Biocapacity Deficit or Reserve qui caract?rise le statut d'un pays donn?e par rapport ? ces consommations et ces r?serves, nous avons pens? qu'il serait int?ressant de voir comment cette variable se distribue suivant les caract?ristiques du pays en lui meme(Population et HDI ...etc), ensuite selon la r?gion o? il appartient. 
+
+La premi?re carte montre la distribution de cette variable par pays, o? l'on peut voir l'existence d'un grande ?cart entre les pays de la meme r?gion (Chili versus Guyana) par exemple.
+
+
+#### Vision Mapping 
+
+```{r, echo=FALSE, fig.height=2, fig.show='hold', fig.width=2, message=FALSE, warning=FALSE}
+countries$iso3 <- countrycode::codelist_panel[match(countries$Country, codelist_panel$country.name), "iso3c"]
+
+data(worldgeojson, package = "highcharter")
+
+dshmstops <- data.frame(q = c(0, exp(1:5)/exp(5)),
+                        c = substring(viridis(5 + 1, option = "D"), 0, 7)) %>%  list_parse2()
+
+highchart() %>% 
+  hc_add_series_map(worldgeojson, countries, value = "Biocapacity_Deficit_or_Reserve", joinBy = "iso3",
+                    dataLabels = list(enabled = TRUE, format = '{point.name}'), name = "Country") %>% 
+                   
+  hc_colorAxis(stops = dshmstops) %>% 
+  hc_legend(enabled = TRUE) %>% 
+  hc_add_theme(hc_theme_db()) %>% 
+  hc_mapNavigation(enabled = TRUE) %>%
+  hc_title(text = "Biocapacity Deficit or Reserve 2016 ") %>%
+  hc_subtitle(text = "visualization per Country") %>% 
+  hc_add_theme(hc_theme_google()) %>%
+  hc_credits(enabled = TRUE, text = "Sources: Exploring Ecological Footprint and Biocapacity (Kaggle)", style = list(fontSize = "10px")) %>% 
+  hc_tooltip(useHTML = TRUE,
+             headerFormat = "<table>",
+             pointFormat = paste("<tr><th>Country <td>{point.Country}</td></th></tr>",
+                                 "<tr><th>Region </th><td>{point.Region}</td></tr>",
+                                 "<tr><th>Population(M)<td>{point.Population}</td></th></tr>",
+                                 "<tr><th>HDI </th><td>{point.HDI}</td></tr>",
+                                 "<tr><th>GDP_per_Capita </th><td>{point.GDP_per_Capita}</td></tr>",
+                                 "<tr><th>Total Ecological Footprint </th><td>{point.Total_Ecological_Footprint}</td></tr>",
+                                 "<tr><th>Total Biocapacity </th><td>{point.Total_Biocapacity}</td></tr>",
+                                 "<tr><th>Biocapacity </th><td>{point.Biocapacity_Deficit_or_Reserve}</td></tr>"),
+             footerFormat = "</table>")
+
+```
+
+#### Vision en Chiffre & Pourcentage
+
+```{r, echo=FALSE, fig.height=2, fig.show='hold', fig.width=2, message=FALSE, warning=FALSE}
+
+Vis_Glo<-countries %>%  arrange(desc(Biocapacity_Deficit_or_Reserve)) %>% 
+  mutate(percent=signif(Biocapacity_Deficit_or_Reserve/sum(Biocapacity_Deficit_or_Reserve)*100))
+
+
+highchart() %>% 
+  hc_title(text = "Biocapacity Deficit or Reserve 2016 ") %>%
+  hc_subtitle(text = "Global Vision In Number & Percentage ") %>% 
+  hc_add_series(Vis_Glo, "column", hcaes(x = Country, y = Biocapacity_Deficit_or_Reserve), name = "Country", colorByPoint = TRUE) %>%
+  hc_add_series(Vis_Glo, "pie", hcaes(name = Country, y = percent), name = "Percent %",
+                size = 100, dataLabels = list(enabled = TRUE),Format = "{value}%") %>% 
+  hc_yAxis(title = list(text = "Biocapacity In Number"),
+           labels = list(format = "{value}")) %>% 
+  hc_xAxis(categories = Vis_Glo$Country) %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px")) %>% 
+  hc_legend(enabled = TRUE) %>%  
+  hc_navigator(enabled = TRUE) %>% 
+  hc_scrollbar(enabled = TRUE)
+
+```
+
+#### Les 20 Tops Pays en Biocapacity Deficit or Reserve
+
+En Zommant sur les pays qui ont le plus de reserve tout en les groupant par region, on peut voir que les trois premiers pays sont le French Guiana(109.01) et Suriname (85.08) ainsi Guyana(63.51),? noter que ces trois pays appartiennent ? la meme r?gion.
+
+
+```{r, echo=FALSE, fig.height=2, fig.show='hold', fig.width=2, message=FALSE, warning=FALSE}
+
+by_countries <- countries %>% arrange(desc(Biocapacity_Deficit_or_Reserve)) %>% head(20) 
+
+t <- tooltip_table(c("Region :","Country :", "Total Ecological Footprint :","Total Biocapacity" ,"Biocapacity(Reserve/Deficit):"), 
+                   c("{point.Region}","{point.Country}", "{point.Total_Ecological_Footprint}", "{point.Total_Biocapacity}","{point.Biocapacity_Deficit_or_Reserve}")) 
+
+hchart(by_countries, type="bar", hcaes(x = Country, y = Biocapacity_Deficit_or_Reserve, group = Region)) %>%
+  hc_yAxis(title = list(text = "Biocapacity In Number")) %>% 
+  hc_title(text = "Top 20 Countries Biocapacity Reserve 2016") %>% 
+  hc_subtitle(text = "Grouped By Region ") %>% 
+  hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = t) %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+```
+
+#### Les 20 Flops Pays en Biocapacity Deficit or Reserve
+
+Comme on peut aussi Zommer sur les pays les plus impact?es en les groupant toujours par region afin de voir ceux les plus en d?ficit comme Luxembourg(-14.14)par exemple qui enregistre un Total Ecological Footprint de(15.82) contre une Total Biocapacity de (1.68), ou bien Aruba(-11.31) pour un Total Ecological Footprint de(11.88) et un Total Biocapacity de(0.57), ? noter que ces deux pays ne rel?vent pas de la meme r?gion.
+
+```{r, echo=FALSE, fig.height=2, fig.show='hold', fig.width=2, message=FALSE, warning=FALSE}
+
+
+by_countries1 <- countries %>% arrange(Biocapacity_Deficit_or_Reserve) %>% head(20)
+
+hchart(by_countries1, type="bar", hcaes(x = Country, y = Biocapacity_Deficit_or_Reserve, group = Region)) %>%
+  hc_yAxis(title = list(text = "Biocapacity In Number")) %>%
+  hc_title(text = "Flop 20 Countries Biocapacity Deficit 2016") %>% 
+  hc_subtitle(text = "Grouped By Region ") %>% 
+  hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = t) %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+
+```
+
+### Biocapacity Deficit or Reserve par Region{.tabset .tabset-fade .tabset-pills}
+
+On peut constater aussi qu'en moyenne les r?gions consid?r?es comme en r?serve sont Latin America et Africa, Tandit que les autres sont en d?ficit.
+
+
+#### La Moyenne Biocapacity Deficit or Reserve par Region
+
+```{r, echo=FALSE, fig.height=2, fig.show='hold', fig.width=2, message=FALSE, warning=FALSE}
+by_Region <- countries %>% group_by(Region)%>%summarise_at(vars(Biocapacity_Deficit_or_Reserve),mean)
+
+highchart()%>%
+  hc_add_series(by_Region, "bar", hcaes(x = Region, y = Biocapacity_Deficit_or_Reserve, color = Region)) %>%
+  hc_yAxis(title = list(text = " Average Biocapacity Per Region")) %>%
+  hc_xAxis(categories = by_Region$Region) %>%
+  hc_title(text = "Biocapacity Reserve or Deficit") %>% 
+  hc_subtitle(text = "Visualized By Region ") %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+```
+
+#### Mapping par Region & Pays
+
+```{r, echo=FALSE, fig.height=4, fig.show='hold', fig.width=10, message=FALSE, warning=FALSE}
+
+geo_country <- merge(countries,Coun,by="Country",all=F)
+
+geo_country %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(lat=geo_country$latitude, lng=geo_country$longitude, clusterOptions = markerClusterOptions(),
+         popup= paste("<br><strong> Region : </strong>",geo_country$Region,
+                     "<br><strong> Biocapacity(Reserve/Deficit) per Region :</strong>",by_Region$Biocapacity_Deficit_or_Reserve,                      "<br><strong> Country : </strong>", geo_country$Country,
+                 "<br><strong> Biocapacity(Reserve/Deficit) for Country : </strong>", geo_country$Biocapacity_Deficit_or_Reserve
+                          
+             ))
+
+```
+
+ 
+## Analyse de la Variable Biocapacity Deficit or Reserve par Variable 
+  
+
+### Croisement avec la variable Population{.tabset .tabset-fade .tabset-pills}
+
+Comme on a d?ja mentionn? on va filtrer sur les valeurs ab?rrantes dans la variables Population (voir les annexes) et aussi pour l'indice de bio-capacit?. 
+
+On peut d?ja remarquer que les pays ayant un indice de biocapacit? ?lev? ont un tr?s faible nombre d'habitants.
+
+#### Analyse de la variable Population 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+By_population <- countries %>% arrange(desc(Population)) %>% head(60)
+
+t1 <- tooltip_table(c("Region :","Country :", "Population :","Total Ecological Footprint :","Total Biocapacity" ,"Biocapacity(Reserve/Deficit):"), 
+                    c("{point.Region}","{point.Country}", "{point.Population}","{point.Total_Ecological_Footprint}", "{point.Total_Biocapacity}","{point.Biocapacity_Deficit_or_Reserve}"))
+
+highchart() %>%   
+  hc_add_series(By_population, "column", hcaes(x = Country, y = Population), name = "Country", colorByPoint = TRUE) %>%
+  hc_xAxis(categories = countries$Country) %>% 
+  hc_title(text = "Population per Country 2016") %>%
+  hc_subtitle(text = paste("Global Vision")) %>% 
+  hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = t1) %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+By_Region_Pop <-countries %>% group_by(Region) %>% na.omit() %>% summarise_at(vars(Population),mean)
+
+highchart() %>%   
+  
+  hc_add_series(By_Region_Pop, "pie", hcaes(name = Region, y = Population), name = " Average Population") %>%
+  hc_title(text = "Population per Region 2016") %>%
+  hc_subtitle(text = paste("Global Vision per Average")) %>% 
+  hc_chart(type = "pie", options3d = list(enabled = TRUE, alpha = 70, beta = 0)) %>% 
+  hc_plotOptions(pie = list(depth = 70)) %>% 
+  hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+             href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+             style = list(fontSize = "12px"))
+
+```
+
+
+#### La relation entre Population & Biocapacity Deficit or Reserve 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+  hchart(filter(countries,Biocapacity_Deficit_or_Reserve< 20,Population< 500), type = 'scatter',
+         hcaes(x = Biocapacity_Deficit_or_Reserve, y = Population, 
+               size = Biocapacity_Deficit_or_Reserve, color = Biocapacity_Deficit_or_Reserve)) %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = t1) %>%
+    hc_xAxis(title = list(text = 'Biocapacity Reserve or Deficit')) %>%
+    hc_yAxis(title = list(text = 'Population')) %>%
+    hc_title(text = 'Population & Biocapacity') %>% 
+    hc_subtitle(text = paste("Relationship Between Population factors & Biocapacity Reserve or Deficit")) %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+  
+```
+
+<center></center>
+
+### Croisement avec la variable HDI{.tabset .tabset-fade .tabset-pills}
+
+On remarque apr?s avoir classer les pays du plus grand au plus petit, que les r?gions de l'Union europ?enne, du Moyen-Orient,de l'Asie centrale et de l'Am?rique du Nord se classent au premier rang de l'HDI.
+
+#### Analyse de la variable HDI
+
+```{r, echo=FALSE, fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+
+  By_HDI <- countries %>% arrange(desc(HDI))
+  
+  By_Region_Hdi <-countries %>% group_by(Region) %>% na.omit() %>% summarise_at(vars(HDI),mean)
+  
+  # graph by country and region :
+
+    highchart() %>% 
+    hc_title(text = "HDI per Country & Region 2016 ") %>%
+    hc_subtitle(text = "Global Vision In Number & Average by Region ") %>% 
+    hc_add_series(By_HDI, "column", hcaes(x = Country, y = HDI), name = "Country", colorByPoint = TRUE) %>%
+    hc_add_series(By_Region_Hdi, "pie", hcaes(name = Region, y = HDI), name = " Average HDI",
+                  size = 100, dataLabels = list(enabled = TRUE),Format = "{value}%") %>% 
+    hc_yAxis(title = list(text = "HDI In Number"),
+             labels = list(format = "{value}")) %>% 
+    hc_xAxis(categories = By_HDI$Country) %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px")) %>% 
+    hc_legend(enabled = TRUE)
+    
+```
+
+
+#### La relation entre HDI & Biocapacity Deficit or Reserve 
+
+D'apr?s la distribution des points qui constituent la relation entre Population, HDI et Biocapaciy(Reserve /Deficit) on peut en conclure qu'il y a une petite relation ? partir d'un HDI ~ <0,7.
+
+Exemple : Suriname , Guyana.
+
+```{r, echo=FALSE, fig.height=4, fig.width=6, message=FALSE, warning=FALSE}
+
+   t2<-tooltip_table(c("Region :","Country :", "HDI:","Total Ecological Footprint :","Total Biocapacity" ,"Biocapacity(Reserve/Deficit):"), 
+                c("{point.Region}","{point.Country}", "{point.HDI}","{point.Total_Ecological_Footprint}", "{point.Total_Biocapacity}","{point.Biocapacity_Deficit_or_Reserve}"))
+  
+  
+  hchart(countries, type = 'scatter', 
+       hcaes(x = HDI, y = Population, 
+             size = Biocapacity_Deficit_or_Reserve, color = Biocapacity_Deficit_or_Reserve)) %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = t2) %>%
+    hc_xAxis(title = list(text = 'HDI')) %>%
+    hc_yAxis(title = list(text = 'Population')) %>%
+    hc_title(text = 'Population & HDI') %>% 
+    hc_subtitle(text = paste("Relationship Between Biocapacity Reserve or Deficit")) %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+  
+```
+
+## Analyse de la variable Biocapacity Deficit or Reserve par Cat?gorie{.tabset .tabset-fade .tabset-pills}
+
+Dans cette section on va s'int?resser aux comportements des composantes de la variable Biocapacity Reserve or Deficit.
+
+Sachant qu'on a :
+
+Total Ecological Foorprint = Cropland_Footprint + Grazing_Footprint + Forest_Footprint 
+                           + Carbon_Footprint + Fish_Footprint + Built-up_Footprint  
+
+Total Biocapacity = Cropland + Grazing_Land + Forest_Land + Fishing_Water + Urban_Land
+                                          
+BioCapacity(Reserve/Deficit) = Total Biocapacity - Total Ecological Foorprint
+
+D'o? on peut avoir les variables suivantes :
+
+Biocapacity_gropLand = Cropland - Cropland_Footprint
+Biocapacity_grazing = Grazing_Land - Grazing_Footprint
+Biocapacity_forest = Forest_Land - Forest_Footprint
+Biocapacity_fish = Fishing_Water - Fish_Footprint
+
+NB: ? ce niveau d'?tude on enleve les NA de l'ensemble de donn?es original
+
+
+### Visualisation de Biocapacity GropLand par Pays & R?gion
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ 
+Cat_biocap <- countries %>% dplyr::select( Country,Region,Population, HDI, GDP_per_Capita,Cropland_Footprint, Grazing_Footprint,Forest_Footprint,Fish_Footprint, Cropland, Grazing_Land, Forest_Land,Fishing_Water,Total_Biocapacity,Total_Ecological_Footprint,Biocapacity_Deficit_or_Reserve) %>% na.omit() %>% 
+    mutate( Biocapacity_gropLand = Cropland - Cropland_Footprint,  Biocapacity_grazing = Grazing_Land - Grazing_Footprint,
+      Biocapacity_forest = Forest_Land - Forest_Footprint,
+      Biocapacity_fish = Fishing_Water - Fish_Footprint) 
+
+
+Cat_biocap$iso3 <- countrycode::codelist_panel[match(Cat_biocap$Country, codelist_panel$country.name), "iso3c"]
+  
+  data(worldgeojson, package = "highcharter")
+  
+  dshmstops <- data.frame(q = c(0, exp(1:5)/exp(5)),
+                          c = substring(viridis(5 + 1, option = "D"), 0, 7)) %>%  list_parse2()
+  
+  highchart() %>% 
+    hc_add_series_map(worldgeojson, Cat_biocap, value = "Biocapacity_gropLand", joinBy = "iso3",
+                      dataLabels = list(enabled = TRUE, format = '{point.name}'), name = "Country") %>% 
+    
+    hc_colorAxis(stops = dshmstops) %>% 
+    hc_legend(enabled = TRUE) %>% 
+    hc_add_theme(hc_theme_db()) %>% 
+    hc_mapNavigation(enabled = TRUE) %>%
+    hc_title(text = "Biocapacity GropLand Deficit or Reserve 2016") %>%
+    hc_subtitle(text = "Visualization per Country") %>% 
+    hc_add_theme(hc_theme_google()) %>%
+    hc_credits(enabled = TRUE, text = "Sources: Exploring Ecological Footprint and Biocapacity (Kaggle)", style = list(fontSize = "10px")) %>% 
+    hc_tooltip(useHTML = TRUE,
+               headerFormat = "<table>",
+               pointFormat = paste("<tr><th>Country <td>{point.Country}</td></th></tr>",
+                                   "<tr><th>Region </th><td>{point.Region}</td></tr>",
+                                   "<tr><th>Population(M)<td>{point.Population}</td></th></tr>",
+                                   "<tr><th>HDI </th><td>{point.HDI}</td></tr>",
+                                   "<tr><th>GDP_per_Capita </th><td>{point.GDP_per_Capita}</td></tr>",
+                                   "<tr><th>Biocapacity GropLand</th><td>{point.Biocapacity_gropLand}</td></tr>",
+                                   "<tr><th>Total Ecological Footprint </th><td>{point.Total_Ecological_Footprint}</td></tr>",
+                                   "<tr><th>Total Biocapacity </th><td>{point.Total_Biocapacity}</td></tr>",
+                                   "<tr><th>Biocapacity(Reserve/Deficit) </th><td>{point.Biocapacity_Deficit_or_Reserve}</td></tr>"),
+               footerFormat = "</table>")
+
+```
+
+
+\newpage
+
+###Visualisation de Biocapacity Grazing par Pays & R?gion : 
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+  highchart() %>% 
+    hc_add_series_map(worldgeojson, Cat_biocap, value = "Biocapacity_grazing", joinBy = "iso3",
+                      dataLabels = list(enabled = TRUE, format = '{point.name}'), name = "Country") %>% 
+    
+    hc_colorAxis(stops = dshmstops) %>% 
+    hc_legend(enabled = TRUE) %>% 
+    hc_add_theme(hc_theme_db()) %>% 
+    hc_mapNavigation(enabled = TRUE) %>%
+    hc_title(text = "Biocapacity Grazing Deficit or Reserve 2016 per Country") %>%
+    hc_add_theme(hc_theme_google()) %>%
+    hc_credits(enabled = TRUE, text = "Sources: Exploring Ecological Footprint and Biocapacity (Kaggle)", style = list(fontSize = "10px")) %>% 
+    hc_tooltip(useHTML = TRUE,
+               headerFormat = "<table>",
+               pointFormat = paste("<tr><th>Country <td>{point.Country}</td></th></tr>",
+                                   "<tr><th>Region </th><td>{point.Region}</td></tr>",
+                                   "<tr><th>Population(M)<td>{point.Population}</td></th></tr>",
+                                   "<tr><th>HDI </th><td>{point.HDI}</td></tr>",
+                                   "<tr><th>GDP_per_Capita </th><td>{point.GDP_per_Capita}</td></tr>",
+                                   "<tr><th>Biocapacity Grazing</th><td>{point.Biocapacity_grazing}</td></tr>",
+                                   "<tr><th>Total Ecological Footprint </th><td>{point.Total_Ecological_Footprint}</td></tr>",
+                                   "<tr><th>Total Biocapacity </th><td>{point.Total_Biocapacity}</td></tr>",
+                                   "<tr><th>Biocapacity(Reserve/Deficit) </th><td>{point.Biocapacity_Deficit_or_Reserve}</td></tr>"),
+               footerFormat = "</table>")
+  
+```
+
+<center></center>
+
+
+###Visualisation de Biocapacity Forest par Pays & R?gion : 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+  highchart() %>% 
+    hc_add_series_map(worldgeojson, Cat_biocap, value = "Biocapacity_forest", joinBy = "iso3",
+                      dataLabels = list(enabled = TRUE, format = '{point.name}'), name = "Country") %>% 
+    hc_colorAxis(stops = dshmstops) %>% 
+    hc_legend(enabled = TRUE) %>% 
+    hc_add_theme(hc_theme_db()) %>% 
+    hc_mapNavigation(enabled = TRUE) %>%
+    hc_title(text = "Biocapacity Forest Deficit or Reserve 2016 per Country") %>%
+    hc_add_theme(hc_theme_google()) %>%
+    hc_credits(enabled = TRUE, text = "Sources: Exploring Ecological Footprint and Biocapacity (Kaggle)", style = list(fontSize = "10px")) %>% 
+    hc_tooltip(useHTML = TRUE,
+               headerFormat = "<table>",
+               pointFormat = paste("<tr><th>Country <td>{point.Country}</td></th></tr>",
+                                   "<tr><th>Region </th><td>{point.Region}</td></tr>",
+                                   "<tr><th>Population(M)<td>{point.Population}</td></th></tr>",
+                                   "<tr><th>HDI </th><td>{point.HDI}</td></tr>",
+                                   "<tr><th>GDP_per_Capita </th><td>{point.GDP_per_Capita}</td></tr>",
+                                   "<tr><th>Biocapacity Forest</th><td>{point.Biocapacity_forest}</td></tr>",
+              "<tr><th>Total Ecological Footprint </th><td>{point.Total_Ecological_Footprint}</td></tr>",
+                  "<tr><th>Total Biocapacity(Reserve/Deficit) </th><td>{point.Total_Biocapacity}</td></tr>",
+                                   "<tr><th>Biocapacity(Reserve/Deficit) </th><td>{point.Biocapacity_Deficit_or_Reserve}</td></tr>"),
+               footerFormat = "</table>")  
+    
+```
+
+
+###visualisation de Biocapacity Fish par Pays & R?gion : 
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+   Cat_biocap$iso3 <- countrycode::codelist_panel[match(Cat_biocap$Country, codelist_panel$country.name), "iso3c"]
+  
+  data(worldgeojson, package = "highcharter")
+  
+  dshmstops <- data.frame(q = c(0, exp(1:5)/exp(5)),
+                          c = substring(viridis(5 + 1, option = "D"), 0, 7)) %>%  list_parse2()
+  
+  highchart() %>% 
+    hc_add_series_map(worldgeojson, Cat_biocap, value = "Biocapacity_fish", joinBy = "iso3",
+                      dataLabels = list(enabled = TRUE, format = '{point.name}'), name = "Country") %>% 
+    
+    hc_colorAxis(stops = dshmstops) %>% 
+    hc_legend(enabled = TRUE) %>% 
+    hc_add_theme(hc_theme_db()) %>% 
+    hc_mapNavigation(enabled = TRUE) %>%
+    hc_title(text = "Biocapacity Fish Deficit or Reserve 2016") %>%
+    hc_subtitle(text = "Visualization per Country") %>% 
+    hc_add_theme(hc_theme_google()) %>%
+    hc_credits(enabled = TRUE, text = "Sources: Exploring Ecological Footprint and Biocapacity (Kaggle)", style = list(fontSize = "10px")) %>% 
+    hc_tooltip(useHTML = TRUE,
+               headerFormat = "<table>",
+               pointFormat = paste("<tr><th>Country <td>{point.Country}</td></th></tr>",
+                                   "<tr><th>Region </th><td>{point.Region}</td></tr>",
+                                   "<tr><th>Population(M)<td>{point.Population}</td></th></tr>",
+                                   "<tr><th>HDI </th><td>{point.HDI}</td></tr>",
+                                   "<tr><th>GDP_per_Capita </th><td>{point.GDP_per_Capita}</td></tr>",
+                                   "<tr><th>Biocapacity Fish</th><td>{point.Biocapacity_fish}</td></tr>",
+                                   "<tr><th>Total Ecological Footprint </th><td>{point.Total_Ecological_Footprint}</td></tr>",
+                                   "<tr><th>Total Biocapacity </th><td>{point.Total_Biocapacity}</td></tr>",
+                                   "<tr><th>Biocapacity(Reserve/Deficit) </th><td>{point.Biocapacity_Deficit_or_Reserve}</td></tr>"),
+               footerFormat = "</table>")
+```
+
+
+## Diff?rentes Analyses{.tabset .tabset-fade .tabset-pills}
+
+
+? partir des graphes illustr?es dans cette section,et aussi tout en gardant dans l'?sprit les r?sultats obtennus jusqu'? maintenant, pour les diff?rents variables analys?es (HDI,Population ...etc),on peut dire que ,les r?gions de l'Union europ?enne, du Moyen-Orient, de l'Asie centrale et de l'Am?rique du Nord ont en moyenne une empreinte ?cologique totale ?lev?e dans l'ensemble des cinq empreintes et, en m?me temps, se classent au premier rang de l'HDI.
+
+Nous pouvons dire aussi qu'en moyenne les r?gions les moins d?velopp?es (Afrique, Asie-Pacifique, Moyen-Orient , Asie centrale) ont des surfaces plus faibles en ce qui concerne chaque empreinte individuellement.
+
+Dans la meme logique, on constate que les r?gions de l'Union europ?enne, du Moyen-Orient, Asie centrale et de l'Am?rique du Nord qui ont un DHI ?lev?,sont associ?es aux r?gions Asie-Pacifique, qui poss?dent ?galement plus de terres et un HDI ?lev? mais une faible biocapacit? totale. 
+
+Les r?gions d'Afrique sont toujours en dessous en l'HDI mais en moyenne ils ont des Total Biocapacity  presque ?gales avec les r?gions avanc?es.
+
+### Distribution des Cat?gories de Total Ecological Foorprint par Region
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+  Moda_Reg <- countries %>% group_by(Region)%>% na.omit() %>% summarise_at(vars(Biocapacity_Deficit_or_Reserve,Cropland_Footprint,Grazing_Footprint,Forest_Footprint,Carbon_Footprint,
+                                                                   Fish_Footprint,Cropland,Grazing_Land,Forest_Land,Fishing_Water,Urban_Land,Total_Biocapacity,Earths_Required,Countries_Required,Total_Ecological_Footprint),mean)
+
+  
+    highchart() %>% 
+      hc_title(text = "Categories of Total Ecological Foorprint") %>%
+      hc_subtitle(text = " Average by Region 2016") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Cropland_Footprint),name="Cropland Footprint") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Grazing_Footprint),name="Grazing Footprint") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Forest_Footprint),name="Forest Footprint") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Carbon_Footprint),name="Carbon Footprint") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Fish_Footprint),name="Fish Footprint") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Total_Ecological_Footprint),name="Total Ecological Footprint") %>%
+      hc_yAxis(title = list(text = "Categories In Number"),
+               labels = list(format = "{value}")) %>% 
+      hc_xAxis(categories = Moda_Reg$Region) %>% 
+      hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+                 href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+                 style = list(fontSize = "12px")) %>% 
+      hc_legend(enabled = TRUE)
+    
+```
+
+
+### Distribution des Cat?gories de Total Biocapacity par Region
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ 
+    highchart() %>% 
+      hc_title(text = "Categories of Total Biocapacity") %>%
+      hc_subtitle(text = " Average by Region 2016") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Cropland),name="Cropland") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Grazing_Land),name="Grazing Land") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Forest_Land),name="Forest Land") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Fishing_Water),name="Fishing Water") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Urban_Land),name="Urban Land") %>% 
+      hc_add_series(Moda_Reg, "column", hcaes(x = Region, y = Total_Biocapacity),name="Total Biocapacity") %>%
+      hc_yAxis(title = list(text = "Categories In Number"),
+               labels = list(format = "{value}")) %>% 
+      hc_xAxis(categories = Moda_Reg$Region) %>% 
+      hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+                 href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+                 style = list(fontSize = "12px")) %>% 
+      hc_legend(enabled = TRUE)
+    
+    
+```
+
+
+### Distribution des Countries_Required par R?gion
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ 
+  highchart() %>%   
+    
+    hc_add_series(Moda_Reg, "pie", hcaes(name = Region, y = Countries_Required), name = "Countries Required") %>%
+    hc_title(text = "Countries Required per Region 2016") %>%
+    hc_subtitle(text = paste("Global Vision per Average")) %>% 
+    hc_chart(type = "pie", options3d = list(enabled = TRUE, alpha = 50, beta = 0)) %>% 
+    hc_plotOptions(pie = list(depth = 50)) %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+
+    
+```
+<center></center>
+
+###Distribution des terres requises par R?gion
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ 
+  highchart() %>%   
+    
+    hc_add_series(Moda_Reg, "pie", hcaes(name = Region, y = Earths_Required), name = " Earths Required") %>%
+    hc_title(text = "Earths Required per Region 2016") %>%
+    hc_subtitle(text = paste("Global Vision per Average")) %>% 
+    hc_chart(type = "pie", options3d = list(enabled = TRUE, alpha = 50, beta = 0)) %>% 
+    hc_plotOptions(pie = list(depth = 50)) %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+    
+```
+<center></center>
+
+# CONCLUSION 
+
+Nous avons r?alis? des analyses graphiques et statistiques de notre jeux de donn?es. Et nos r?sultats montrent que, les caract?ristiques les plus influentes sont L'indice de d?veloppement humain (HDI) et GDP_per_Capita associ? ? la Population, autant que le pays est en forte croissance, il enregistre une empreinte ?cologique total plus ?lev?e au point q'il peut creus? son d?ficit comme pour le cas de luxembourg.
+
+En revanche on constate que ces memes variables ont une corre?lation assez faible envers la Variable Total Biocapacity.
+
+# REFERENCES
+
+https://www.kaggle.com/jonathanbouchet/global-ecological-footprint/notebook  
+
+https://www.kaggle.com/brenborbs/exploring-ecological-footprint-and-biocapacity
+
+https://www.kaggle.com/ambarish/eda-lacrimes-maps-timeseriesforecasts-xgboost.
+
+
+# ANNEXES{.tabset .tabset-fade .tabset-pills}
+
+##Annexes 1
+
+```{r, echo=FALSE, fig.height=6, fig.width=9, message=FALSE, warning=FALSE}
+ t6<-tooltip_table(c("Region :","Country :", "Countries Required:","Total Ecological Footprint :","Biocapacity(Reserve/Deficit):"), 
+                    c("{point.Region}","{point.Country}", "{point.Countries_Required}","{point.Total_Ecological_Footprint}","{point.Biocapacity_Deficit_or_Reserve}"))
+  
+
+  hchart(countries, type = 'scatter', 
+         hcaes(x = Countries_Required, y = Total_Ecological_Footprint, 
+               size = Biocapacity_Deficit_or_Reserve, color = Biocapacity_Deficit_or_Reserve)) %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = t6) %>%
+    hc_xAxis(title = list(text = 'Countries Required')) %>%
+    hc_yAxis(title = list(text = 'Total Ecological Footprint')) %>%
+    hc_title(text = 'Countries Required & Total Ecological Footprint') %>% 
+    hc_subtitle(text = paste("Relationship Between Biocapacity Reserve or Deficit")) %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+  
+  
+   t7<-tooltip_table(c("Region :","Country :", "Earths Required:","Total Ecological Footprint :","Biocapacity(Reserve/Deficit):"), 
+                    c("{point.Region}","{point.Country}", "{point.Earths_Required}","{point.Total_Ecological_Footprint}","{point.Biocapacity_Deficit_or_Reserve}"))
+  
+  
+  hchart(countries, type = 'scatter', 
+         hcaes(x = Earths_Required, y = Total_Ecological_Footprint, 
+               size = Biocapacity_Deficit_or_Reserve, color = Biocapacity_Deficit_or_Reserve)) %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = t7) %>%
+    hc_xAxis(title = list(text = 'Earths Required')) %>%
+    hc_yAxis(title = list(text = 'Total Ecological Footprint')) %>%
+    hc_title(text = 'Earths Required & Total Ecological Footprint') %>% 
+    hc_subtitle(text = paste("Relationship Between Biocapacity Reserve or Deficit")) %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+
+  
+   t8<-tooltip_table(c("Region :","Country :", "HDI:","Total Ecological Footprint :","Biocapacity(Reserve/Deficit):"), 
+                    c("{point.Region}","{point.Country}", "{point.HDI}","{point.Total_Ecological_Footprint}","{point.Biocapacity_Deficit_or_Reserve}"))
+  
+  
+  hchart(countries, type = 'scatter', 
+         hcaes(x = HDI, y = Total_Ecological_Footprint, 
+               size = Biocapacity_Deficit_or_Reserve, color = Biocapacity_Deficit_or_Reserve)) %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = t8) %>%
+    hc_xAxis(title = list(text = 'HDI')) %>%
+    hc_yAxis(title = list(text = 'Total Ecological Footprint')) %>%
+    hc_title(text = 'HDI & Total Ecological Footprint') %>% 
+    hc_subtitle(text = paste("Relationship Between Biocapacity Reserve or Deficit")) %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+  
+ 
+ t9<-tooltip_table(c("Region :","Country :", "HDI:","GDP:","Total Ecological Footprint :","Biocapacity(Reserve/Deficit):"), 
+                    c("{point.Region}","{point.Country}", "{point.HDI}","{point.GDP_per_Capita}","{point.Total_Ecological_Footprint}","{point.Biocapacity_Deficit_or_Reserve}"))
+  
+  
+  hchart(countries, type = 'scatter', 
+         hcaes(x = GDP_per_Capita, y = Total_Ecological_Footprint , 
+               size = Biocapacity_Deficit_or_Reserve, color = Biocapacity_Deficit_or_Reserve)) %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = t9) %>%
+    hc_xAxis(title = list(text = 'GDP_per_Capita')) %>%
+    hc_yAxis(title = list(text = 'Total_Ecological_Footprint')) %>%
+    hc_title(text = 'GDP per Capita & Total_Ecological_Footprint') %>% 
+    hc_subtitle(text = paste("Relationship Between Biocapacity Deficit or Reserve")) %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+
+  
+```
+<center>Annexe 1</center>
+
+##Annexes 2
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+ hchart(countries, type = 'scatter', hcaes(x = Biocapacity_Deficit_or_Reserve, y = Population, size = Biocapacity_Deficit_or_Reserve, color = Biocapacity_Deficit_or_Reserve)) %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "", pointFormat = t1) %>%
+    hc_xAxis(title = list(text = 'Biocapacity Reserve or Deficit')) %>%
+    hc_yAxis(title = list(text = 'Population')) %>%
+    hc_title(text = 'Population & Biocapacity') %>% 
+    hc_subtitle(text = paste("Relationship Between Population factors & Biocapacity Reserve or Deficit")) %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+
+
+
+  BG_VIS<- Cat_biocap %>% arrange(desc(Biocapacity_Deficit_or_Reserve))
+  
+ 
+  t3<-tooltip_table(c("Region :","Country :", "Biocapacity_gropLand:","Total Ecological Footprint :","Total Biocapacity" ,"Biocapacity(Reserve/Deficit):"), 
+                    c("{point.Region}","{point.Country}", "{point.Biocapacity_gropLand}","{point.Total_Ecological_Footprint}", "{point.Total_Biocapacity}","{point.Biocapacity_Deficit_or_Reserve}"))
+  
+  hchart(filter(Cat_biocap,Biocapacity_Deficit_or_Reserve< 20,Biocapacity_gropLand<2), type = 'scatter', 
+         hcaes(x = Biocapacity_gropLand, y =Biocapacity_Deficit_or_Reserve, 
+               size = Biocapacity_Deficit_or_Reserve, color = Biocapacity_Deficit_or_Reserve)) %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "<table>",
+               pointFormat = t3,
+               footerFormat = "</table>") %>%
+    hc_title(text = "Biocapacity_gropLand & Biocapacity ") %>% 
+    hc_subtitle(text = "Relationship with Biocapacity Reserve or Deficit") %>% 
+    hc_xAxis(title = list(text = "Biocapacity_gropLand")) %>% 
+    hc_yAxis(title = list(text = "Biocapacity Deficit or Reserve")) %>% 
+    hc_chart(zoomType = "xy") %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+
+  
+  t4<-tooltip_table(c("Region :","Country :", "Biocapacity_grazing:","Total Ecological Footprint :","Total Biocapacity" ,"Biocapacity(Reserve/Deficit):"), 
+                    c("{point.Region}","{point.Country}", "{point.Biocapacity_grazing}","{point.Total_Ecological_Footprint}", "{point.Total_Biocapacity}","{point.Biocapacity_Deficit_or_Reserve}"))
+  
+  
+  hchart(filter(Cat_biocap,Biocapacity_Deficit_or_Reserve< 20,Biocapacity_grazing<2), type = 'scatter', 
+         hcaes(x = Biocapacity_grazing, y =Biocapacity_Deficit_or_Reserve, 
+               size = Biocapacity_Deficit_or_Reserve, color = Biocapacity_Deficit_or_Reserve)) %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "<table>",
+             pointFormat = t4,
+             footerFormat = "</table>") %>%
+    hc_title(text = "Biocapacity Grazing & Biocapacity ") %>% 
+    hc_subtitle(text = "Relationship with Biocapacity Reserve or Deficit") %>% 
+    hc_xAxis(title = list(text = "Biocapacity Grazing")) %>% 
+    hc_yAxis(title = list(text = "Biocapacity Deficit or Reserve")) %>% 
+    hc_chart(zoomType = "xy") %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px")) 
+  
+    t5<-tooltip_table(c("Region :","Country :", "Biocapacity Forest:","Total Ecological Footprint :","Total Biocapacity" ,"Biocapacity(Reserve/Deficit):"), 
+                    c("{point.Region}","{point.Country}", "{point.Biocapacity_forest}","{point.Total_Ecological_Footprint}", "{point.Total_Biocapacity}","{point.Biocapacity_Deficit_or_Reserve}"))
+  
+  
+  hchart(  filter(Cat_biocap,Biocapacity_Deficit_or_Reserve< 20,Biocapacity_forest<20), type = 'scatter', 
+         hcaes(x = Biocapacity_forest, y =Biocapacity_Deficit_or_Reserve, 
+               size = Biocapacity_Deficit_or_Reserve, color = Biocapacity_Deficit_or_Reserve)) %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "<table>",
+               pointFormat = t5,
+               footerFormat = "</table>") %>%
+    hc_title(text = "Biocapacity Forest & Biocapacity ") %>% 
+    hc_subtitle(text = "Relationship with Biocapacity Reserve or Deficit") %>% 
+    hc_xAxis(title = list(text = "Biocapacity Forest")) %>% 
+    hc_yAxis(title = list(text = "Biocapacity Deficit or Reserve")) %>% 
+    hc_chart(zoomType = "xy") %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+
+ 
+  
+ tt<-tooltip_table(c("Region :","Country :", " Biocapacity Fish:","Total Ecological Footprint :","Total Biocapacity" ,"Biocapacity(Reserve/Deficit):"), 
+                    c("{point.Region}","{point.Country}", "{point.Biocapacity_fish}","{point.Total_Ecological_Footprint}", "{point.Total_Biocapacity}","{point.Biocapacity_Deficit_or_Reserve}"))
+  
+  hchart(filter(Cat_biocap,Biocapacity_Deficit_or_Reserve< 20, Biocapacity_fish<10), type = 'scatter', 
+         hcaes(x = Biocapacity_fish, y =Biocapacity_Deficit_or_Reserve, 
+               size = Biocapacity_Deficit_or_Reserve, color = Biocapacity_Deficit_or_Reserve)) %>%
+    hc_tooltip(useHTML = TRUE, headerFormat = "<table>",
+               pointFormat = tt,
+               footerFormat = "</table>") %>%
+    hc_title(text = "Biocapacity Fish & Biocapacity ") %>% 
+    hc_subtitle(text = "Relationship with Biocapacity Reserve or Deficit") %>% 
+    hc_xAxis(title = list(text = "Biocapacity Fish")) %>% 
+    hc_yAxis(title = list(text = "Biocapacity Deficit or Reserve")) %>% 
+    hc_chart(zoomType = "xy") %>% 
+    hc_credits(enabled = TRUE, text = "Sourc: Exploring Ecological Footprint and Biocapacity (Kaggle)",
+               href = "https://www.youtube.com/watch?v=f_J8QU1m0Ng",
+               style = list(fontSize = "12px"))
+   
+  
+  
+   
+```
+
+<center>Annexe 2</center>
+
+
