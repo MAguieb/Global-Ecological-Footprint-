@@ -27,7 +27,7 @@ Existe-t-il une relation entre le statut d’un pays (Réserve, Déficit) et sa 
 ### L'application Shiny : 
 https://linhtran115.shinyapps.io/footprint2/
 
-# REFERENCES
+### REFERENCES
 
 https://www.kaggle.com/jonathanbouchet/global-ecological-footprint/notebook  
 
