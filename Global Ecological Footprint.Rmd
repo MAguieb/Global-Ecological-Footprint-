@@ -1,6 +1,6 @@
 ---
 title: "<center>**Global Ecological Footprint Project**</center>"
-author: "<center>By Thi My Linh TRAN & Mereim AGUIEB</center>"
+author: "<center>By Mereim AGUIEB</center>"
 date: "<center>Paris, 15 Avril 2018</center>"
 output:
   pdf_document:
@@ -16,57 +16,6 @@ output:
     toc: yes
   word_document: default
 ---
-\centering
-\raggedright
-    
-\begin{center}
-MASTER 2 TECHNIQUES D'INFORMATION ET DE DECISION DANS L'ENTREPRISE
-\end{center}
-    
-
-\newpage
-\tableofcontents
-
-<style type="text/css">
-
-
-<style type="text/css">
-
-body{ font-family: "Calibri"
-      font-size: 11px;
-  }
-td {  /* Table  */
-  font-size: 8px;
-}
-h1.title {
-  font-size: 28px;
-  color: DarkRed;
-}
-h1 { /* Header 1 */
-  font-size: 28px;
-  color: DarkBlue;
-}
-h2 { /* Header 2 */
-    font-size: 22px;
-  color: DarkBlue;
-}
-h3 { /* Header 3 */
-  font-size: 18px;
-  font-family: "Calibri", Times, serif;
-  color: DarkBlue;
-}
-code.r{ /* Code block */
-    font-size: 12px;
-}
-pre { /* Code block - determines code spacing between lines */
-    font-size: 11px;
-}
-
-
-</style>
-
----
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.align="justify")
@@ -74,86 +23,13 @@ knitr::opts_chunk$set(echo = TRUE, fig.align="justify")
 
 \newpage
 
-# Introduction
-
-## Probl?matique & D?finitions
-
-L'empreinte ?cologique recueille des donn?es sur les atouts ?cologiques dont une population a besoin pour produire les ressources naturelles qu'elle consomme, notre jeux de donn?es pr?sentent l'empreinte ?cologique par pays, ceci est une analyse de donn?es exploratoire sur l'ensemble de nos variables. 
-
-D'une part l'empreinte ?cologique qui repr?sente l'?carte entre la consommation des ressources naturelles et la capacit? d'absorber les d?chets produits d'une population donn?e. 
-
-Il est d?fini par :
-
-Total Ecological Foorprint = Cropland Footprint + Grazing Footprint + Forest Footprint + Carbon Footprint + Fish Footprint + Built-up Footprint
-
-D'autre part cette variable est compar? au Total Biocapacity de la r?gion, qui est d?fini par:
-Total Biocapacit? = Cropland + Grazing Land + Forest Land + Fishing Water + Urban Land
-
-On aussi la variable Biocapacity (Reserve or Deficit) qui d?finit par: 
-
-BioCapacity = Total Biocapacity - Total Ecological Foorprint
-
- Si BioCapacity > 0, la r?gion est appel?e une r?serve.
-   
- Si BioCapacity < 0, la r?gion est appel?e D?ficit, ce qui signifie qu'elle doit importer des actifs pour soutenir sa population.
-
-N.B: Notre jeux de donn?es ne contient pas la variable Built-up Footprint, mais nous pouvons l'inf?rer en soustrayant le Total Ecological Foorprint des autres caract?ristiques (Cropland Footprint, Grazing Footprint, Forest Footprint, Carbon Footprint, Fish Footprint)
-
-Quelques R?flexions:
- 
- Quels pays ont les plus grands d?ficits ou r?serves ?cologiques?
- 
- Existe-t-il une relation entre le statut d'un pays (R?serve, D?ficit) et sa Population, GPD, HDI (Indice de 
- D?veloppement Humain)?
    
 # Dataset Overview{.tabset .tabset-fade .tabset-pills} 
 
 Tout d'abord, regardons les variables que nous avons dans notre jeux de donn?es: 
 
 ```{r Airbnb, fig.align="center", echo=FALSE, message=FALSE, warning=FALSE}
-library(leaflet)
-library(ggplot2)
-library (dplyr)
-library(tidyr)
-library(data.table)
-library(lubridate)
-library(magrittr)
-library(tidyverse)
-library(manhattanly)
-library(randomForest)
-library(missForest)
-library(mice)
-library(VIM)
-library(margins)
-library(sunburstR)
-library(ggcorrplot)
-library(rpart)
-library(forcats)
-library(qqman)
-library(MASS)  
-library(glmnet)
-library(rattle)
-library(rpart.plot)
-library(RColorBrewer)
-library(caret)
-library(foreach)
-library(purrr)
-library(zoo)
-library (doParallel)
-library(highcharter)
-library(DT)
-library(viridisLite)
-library(countrycode)
-library(xts)
-library(maps)
-library(maptools)
-library(treemap)
-library(igraph)
-library(Amelia)
-library(gridExtra)
-# install.packages("yaml")
-library(yaml)
-setwd("C:/Users/Admin/Desktop/Projet Dany")
+
 countries <- fread("./countries.csv")
 Coun <-fread("./Country.csv")
 glimpse (countries)
@@ -164,7 +40,7 @@ glimpse (countries)
 Notre ensemble de donn?es contient 22 variables et 188 observations. Chaque ligne correspond aux diif?rents informations qui   caract?rise un pays donn?e telles que: GDP_per_Capita, HDI, Population, etc., y compris son statut en Biocapacity (Reserve or Deficit). En observant rapidement, nous pouvons voir qu'il y a des variables qui contiennent des valeurs manquantes. De plus, il y a des variables que nous n'aurons pas besoin d'utiliser. En effet, Data_Quality ne sera pas utilser dans notre ?tude.
 
 
-# Traitement & Codage des Donn?es
+# Traitement & Codage des Données
 
 ## Data Selection
   
