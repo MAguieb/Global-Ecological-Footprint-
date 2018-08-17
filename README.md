@@ -24,3 +24,5 @@ Quelques Réflexions:
 Quels pays ont les plus grands déficits ou réserves écologiques?
 
 Existe-t-il une relation entre le statut d’un pays (Réserve, Déficit) et sa Population, GPD, HDI (Indice de Développement Humain)?
+### L'application Shiny : 
+https://linhtran115.shinyapps.io/footprint2/
