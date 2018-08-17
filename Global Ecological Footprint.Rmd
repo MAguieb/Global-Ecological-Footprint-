@@ -35,9 +35,9 @@ Coun <-fread("./Country.csv")
 glimpse (countries)
 ```
 
-<center>Table 1 : Visualisation des Donn?es</center>
+<center>Table 1 : Visualisation des Données</center>
   
-Notre ensemble de donn?es contient 22 variables et 188 observations. Chaque ligne correspond aux diif?rents informations qui   caract?rise un pays donn?e telles que: GDP_per_Capita, HDI, Population, etc., y compris son statut en Biocapacity (Reserve or Deficit). En observant rapidement, nous pouvons voir qu'il y a des variables qui contiennent des valeurs manquantes. De plus, il y a des variables que nous n'aurons pas besoin d'utiliser. En effet, Data_Quality ne sera pas utilser dans notre ?tude.
+Notre ensemble de données contient 22 variables et 188 observations. Chaque ligne correspond aux diif?rents informations qui   caract?rise un pays donn?e telles que: GDP_per_Capita, HDI, Population, etc., y compris son statut en Biocapacity (Reserve or Deficit). En observant rapidement, nous pouvons voir qu'il y a des variables qui contiennent des valeurs manquantes. De plus, il y a des variables que nous n'aurons pas besoin d'utiliser. En effet, Data_Quality ne sera pas utilser dans notre ?tude.
 
 
 # Traitement & Codage des Données
@@ -62,7 +62,7 @@ countries <- countries %>% mutate(GDP_per_Capita=as.double(as.character(GDP_per_
 
 ##Traitement des Valeurs Manquantes
 
-Le r?sultat montre qu'il y a effectivement 46 lignes avec des valeurs manquantes dans les variables sont les suivantes : ("HDI","GDP_per_Capita","Cropland_Footprint","Grazing_Footprint","Forest_Footprint","Carbon_Footprint",
+Le résultat montre qu'il y a effectivement 46 lignes avec des valeurs manquantes dans les variables sont les suivantes : ("HDI","GDP_per_Capita","Cropland_Footprint","Grazing_Footprint","Forest_Footprint","Carbon_Footprint",
 "Fish_Footprint","Cropland","Grazing_Land","Forest_Land","Fishing_Water","Urban_Land"). 
 les valeurs manquantes ne concernent que les cat?gories de Total Ecological Foorprint et Total BioCapacity, et non pas dans les variables qui repr?sentent leurs totaux, donc nous pouvons toujours utiliser ces valeurs.
 
@@ -77,9 +77,9 @@ colnames(countries)[colSums(is.na(countries)) > 0]
 ```
 
   
-## Etude des Valeurs Ab?rrantes{.tabset .tabset-fade .tabset-pills}  
+## Etude des Valeurs Abérrantes{.tabset .tabset-fade .tabset-pills}  
 
-Gr?ce ? ces bo?tes ? moustaches, nous pouvons clairement voir les valeurs extr?mes soit par pays ou bien par r?gion. Dans le boxplot du Population par exemple soit par pays ou bien par region, les valeurs maximales ?taient dans les r?gions Asiatiques, dans l'Afrique et l'Amerique Latine. 
+Grace à ces boites à moustaches, nous pouvons clairement voir les valeurs extr?mes soit par pays ou bien par r?gion. Dans le boxplot du Population par exemple soit par pays ou bien par region, les valeurs maximales ?taient dans les r?gions Asiatiques, dans l'Afrique et l'Amerique Latine. 
 on adaptant la meme logique  pour les autres variables analys?es, il est possible de choisir d'exclure ces variables pour serner les enjeux de l'?tudes, mais vu que c'est informations sont des caract?ristiques qui diff?renciers chaque pays, on a pr?fer? les garder et de faire des filtres au fur et au musure de notre ?tude si cela s'av?re n?cessaire.
 
 
@@ -178,7 +178,7 @@ hcboxplot(x = countries$Biocapacity_Deficit_or_Reserve, var= countries$Region) %
 ```
 
 
-## Analyse des Corr?lations
+## Analyse des Corrélations
 
 La figure ci-dessus repr?sente la matrice de corr?lation des variables num?riques de l'ensemble de donn?es. Nous avons exclu les variables non num?riques.
 
@@ -247,7 +247,7 @@ hchart.cor(x) %>%
 ```
 
 
-# Analyse des Donn?es
+# Analyse des Données
 
 ##Analyse de la Distribution de la Variable Biocapacity Deficit or Reserve
 
@@ -447,8 +447,6 @@ highchart() %>%
              style = list(fontSize = "12px"))
 
 ```
-
-
 #### La relation entre Population & Biocapacity Deficit or Reserve 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -527,7 +525,7 @@ Exemple : Suriname , Guyana.
   
 ```
 
-## Analyse de la variable Biocapacity Deficit or Reserve par Cat?gorie{.tabset .tabset-fade .tabset-pills}
+## Analyse de la variable Biocapacity Deficit or Reserve par Catégorie{.tabset .tabset-fade .tabset-pills}
 
 Dans cette section on va s'int?resser aux comportements des composantes de la variable Biocapacity Reserve or Deficit.
 
@@ -550,7 +548,7 @@ Biocapacity_fish = Fishing_Water - Fish_Footprint
 NB: ? ce niveau d'?tude on enleve les NA de l'ensemble de donn?es original
 
 
-### Visualisation de Biocapacity GropLand par Pays & R?gion
+### Visualisation de Biocapacity GropLand par Pays & Région
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
  
@@ -597,7 +595,7 @@ Cat_biocap$iso3 <- countrycode::codelist_panel[match(Cat_biocap$Country, codelis
 
 \newpage
 
-###Visualisation de Biocapacity Grazing par Pays & R?gion : 
+###Visualisation de Biocapacity Grazing par Pays & Région : 
 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -631,7 +629,7 @@ Cat_biocap$iso3 <- countrycode::codelist_panel[match(Cat_biocap$Country, codelis
 <center></center>
 
 
-###Visualisation de Biocapacity Forest par Pays & R?gion : 
+###Visualisation de Biocapacity Forest par Pays & Région : 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -661,7 +659,7 @@ Cat_biocap$iso3 <- countrycode::codelist_panel[match(Cat_biocap$Country, codelis
 ```
 
 
-###visualisation de Biocapacity Fish par Pays & R?gion : 
+###visualisation de Biocapacity Fish par Pays & Région : 
 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -700,10 +698,10 @@ Cat_biocap$iso3 <- countrycode::codelist_panel[match(Cat_biocap$Country, codelis
 ```
 
 
-## Diff?rentes Analyses{.tabset .tabset-fade .tabset-pills}
+## Différentes Analyses{.tabset .tabset-fade .tabset-pills}
 
 
-? partir des graphes illustr?es dans cette section,et aussi tout en gardant dans l'?sprit les r?sultats obtennus jusqu'? maintenant, pour les diff?rents variables analys?es (HDI,Population ...etc),on peut dire que ,les r?gions de l'Union europ?enne, du Moyen-Orient, de l'Asie centrale et de l'Am?rique du Nord ont en moyenne une empreinte ?cologique totale ?lev?e dans l'ensemble des cinq empreintes et, en m?me temps, se classent au premier rang de l'HDI.
+à partir des graphes illustrées dans cette section,et aussi tout en gardant dans l'?sprit les r?sultats obtennus jusqu'? maintenant, pour les diff?rents variables analys?es (HDI,Population ...etc),on peut dire que ,les r?gions de l'Union europ?enne, du Moyen-Orient, de l'Asie centrale et de l'Am?rique du Nord ont en moyenne une empreinte ?cologique totale ?lev?e dans l'ensemble des cinq empreintes et, en m?me temps, se classent au premier rang de l'HDI.
 
 Nous pouvons dire aussi qu'en moyenne les r?gions les moins d?velopp?es (Afrique, Asie-Pacifique, Moyen-Orient , Asie centrale) ont des surfaces plus faibles en ce qui concerne chaque empreinte individuellement.
 
@@ -711,7 +709,7 @@ Dans la meme logique, on constate que les r?gions de l'Union europ?enne, du Moye
 
 Les r?gions d'Afrique sont toujours en dessous en l'HDI mais en moyenne ils ont des Total Biocapacity  presque ?gales avec les r?gions avanc?es.
 
-### Distribution des Cat?gories de Total Ecological Foorprint par Region
+### Distribution des Catégories de Total Ecological Foorprint par Region
 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -739,7 +737,7 @@ Les r?gions d'Afrique sont toujours en dessous en l'HDI mais en moyenne ils ont 
 ```
 
 
-### Distribution des Cat?gories de Total Biocapacity par Region
+### Distribution des Catégories de Total Biocapacity par Region
 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -763,9 +761,7 @@ Les r?gions d'Afrique sont toujours en dessous en l'HDI mais en moyenne ils ont 
     
     
 ```
-
-
-### Distribution des Countries_Required par R?gion
+### Distribution des Countries_Required par Région
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
  
@@ -784,7 +780,7 @@ Les r?gions d'Afrique sont toujours en dessous en l'HDI mais en moyenne ils ont 
 ```
 <center></center>
 
-###Distribution des terres requises par R?gion
+###Distribution des terres requises par Région
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
  
@@ -801,23 +797,6 @@ Les r?gions d'Afrique sont toujours en dessous en l'HDI mais en moyenne ils ont 
     
 ```
 <center></center>
-
-# CONCLUSION 
-
-Nous avons r?alis? des analyses graphiques et statistiques de notre jeux de donn?es. Et nos r?sultats montrent que, les caract?ristiques les plus influentes sont L'indice de d?veloppement humain (HDI) et GDP_per_Capita associ? ? la Population, autant que le pays est en forte croissance, il enregistre une empreinte ?cologique total plus ?lev?e au point q'il peut creus? son d?ficit comme pour le cas de luxembourg.
-
-En revanche on constate que ces memes variables ont une corre?lation assez faible envers la Variable Total Biocapacity.
-
-# REFERENCES
-
-https://www.kaggle.com/jonathanbouchet/global-ecological-footprint/notebook  
-
-https://www.kaggle.com/brenborbs/exploring-ecological-footprint-and-biocapacity
-
-https://www.kaggle.com/ambarish/eda-lacrimes-maps-timeseriesforecasts-xgboost.
-
-
-# ANNEXES{.tabset .tabset-fade .tabset-pills}
 
 ##Annexes 1
 
